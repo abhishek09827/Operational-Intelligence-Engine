@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Text
+from sqlalchemy import Column, Integer, String, DateTime, Float, Text, JSON
 from sqlalchemy.sql import func
-from pgvector.sqlalchemy import Vector
 from app.models.base import Base
 
 class Incident(Base):
@@ -19,5 +18,6 @@ class Incident(Base):
     suggested_fix = Column(Text, nullable=True)
     confidence_score = Column(Float, nullable=True)
     
-    # RAG Embeddings (Dimension 768 for Gemini text-embedding-004)
-    embedding = Column(Vector(768))
+    # RAG Embeddings stored as JSON string (list of floats)
+    # This avoids dimension mismatch issues and makes the system more flexible
+    embedding = Column(JSON, nullable=True)

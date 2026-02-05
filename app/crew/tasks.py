@@ -23,6 +23,7 @@ class OpsTasks:
                 Explain the 'Why'.
             """),
             agent=agent,
+            context=context,
             expected_output="A detailed explanation of the root cause."
         )
 
@@ -34,6 +35,7 @@ class OpsTasks:
                 Explain why this fix solves the root problem.
             """),
             agent=agent,
+            context=context,
             expected_output="Actionable steps to resolve the incident."
         )
 
@@ -49,5 +51,6 @@ class OpsTasks:
                 Format as Markdown.
             """),
             agent=agent,
+            context=context,
             expected_output="A full markdown incident report."
         )

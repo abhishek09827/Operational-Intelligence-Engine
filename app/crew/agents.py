@@ -1,13 +1,12 @@
-from crewai import Agent
+from crewai import Agent, LLM
 from langchain_google_genai import ChatGoogleGenerativeAI
 from app.core.config import settings
 
 class OpsAgents:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(
-            model=settings.GEMINI_MODEL_NAME,
-            google_api_key=settings.GOOGLE_API_KEY,
-            temperature=0.7
+        self.llm = LLM(
+            model="gemini/gemini-2.5-flash",
+            api_key=settings.GOOGLE_API_KEY
         )
 
     def log_analysis_agent(self):
