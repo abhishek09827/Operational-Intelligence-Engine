@@ -16,9 +16,6 @@
 The system follows a microservices-based architecture powered by Docker containers.
 <img width="2631" height="838" alt="Untitled-2026-02-07-1602" src="https://github.com/user-attachments/assets/d333c654-3285-4507-bc65-dedb74226d81" />
 
-
-> **Note**: This diagram handles high-level data flow. You can copy the Mermaid code above and paste it into [Excalidraw](https://excalidraw.com/) (using the "Mermaid" tool) for further editing.
-
 ## 🛠️ Tech Stack
 
 - **Backend Framework**: [FastAPI](https://fastapi.tiangolo.com/)
