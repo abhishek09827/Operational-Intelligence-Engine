@@ -14,6 +14,9 @@ app = FastAPI(title=settings.PROJECT_NAME)
 # Instrument Prometheus
 Instrumentator().instrument(app).expose(app)
 
+from app.api.api_v1.api import api_router
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     start_time = time.time()
