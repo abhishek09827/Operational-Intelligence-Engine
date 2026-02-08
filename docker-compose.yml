@@ -34,5 +34,19 @@ services:
     ports:
       - "6379:6379"
 
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: streamlit run frontend/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://app:8000/api/v1
+    depends_on:
+      - app
+    volumes:
+      - .:/app
+
 volumes:
   postgres_data:
