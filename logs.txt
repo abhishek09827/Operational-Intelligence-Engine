@@ -1,0 +1,3 @@
+Sending request to http://localhost:8000/api/v1/incident/analyze...
+Error: 500
+Internal Server Error
