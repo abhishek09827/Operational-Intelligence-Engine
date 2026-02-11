@@ -11,15 +11,104 @@
 - **RAG Integration**: search through historical incident data using vector embeddings (pgvector).
 - **Observability**: Built-in Prometheus instrumentation for real-time monitoring.
 
-## Architecture
-- **CrewAI**: Orchestrates agents.
-- **FastAPI**: Backend API.
-- **Docker**: Containerization.
-- **PostgreSQL**: Database.
+## 🏗️ Architecture
 
-## Setup
-1. Clone the repo.
-2. Run `docker-compose up --build`.
+The system follows a microservices-based architecture powered by Docker containers.
 
-## Usage
-Access the API at `http://localhost:8000`.
+```mermaid
+graph TD
+    Client[Client / User] -->|HTTP Request| API[FastAPI Application]
+    
+    subgraph "Core Services"
+        API -->|Logging| Logs[Structured Logging]
+        API -->|Metrics| Prom[Prometheus]
+        API -->|Task Queue| Redis[Redis]
+    end
+    
+    subgraph "Agentic Workflow (CrewAI)"
+        API -->|Trigger| Crew[OpsCrew\n(Manager)]
+        Crew --> Agent1[Log Analyst Agent]
+        Crew --> Agent2[RCA Agent]
+        Crew --> Agent3[Fix Suggester Agent]
+        Crew --> Agent4[Report Generator Agent]
+    end
+    
+    subgraph "Data Layer"
+        Crew -->|Vector Search| DB[(PostgreSQL + pgvector)]
+        API -->|CRUD| DB
+    end
+
+    classDef service fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef agent fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef db fill:#bfb,stroke:#333,stroke-width:2px;
+    
+    class API,Redis,Prom service;
+    class Agent1,Agent2,Agent3,Agent4,Crew agent;
+    class DB db;
+```
+
+> **Note**: This diagram handles high-level data flow. You can copy the Mermaid code above and paste it into [Excalidraw](https://excalidraw.com/) (using the "Mermaid" tool) for further editing.
+
+## 🛠️ Tech Stack
+
+- **Backend Framework**: [FastAPI](https://fastapi.tiangolo.com/)
+- **AI/Agents**: [CrewAI](https://crewai.com/), [LangChain](https://langchain.com/)
+- **LLM**: Google Gemini
+- **Database**: PostgreSQL (with `pgvector` extension)
+- **Caching/Queue**: Redis
+- **Monitoring**: Prometheus
+- **Containerization**: Docker & Docker Compose
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Docker & Docker Compose
+- Python 3.10+ (for local development)
+- Google AI Studio API Key
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/OpsPilot.ai.git
+   cd OpsPilot.ai
+   ```
+
+2. **Configure Environment**:
+   Create a `.env` file in the root directory:
+   ```env
+   GOOGLE_API_KEY=your_google_api_key_here
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_DB=opspilot
+   DATABASE_URL=postgresql://postgres:postgres@db:5432/opspilot
+   ```
+
+3. **Run with Docker**:
+   ```bash
+   docker-compose up --build -d
+   ```
+
+4. **Access the API**:
+   - Swagger UI: `http://localhost:8000/docs`
+   - Health Check: `http://localhost:8000/health`
+
+## 🧪 Testing
+
+Run typical tests using pytest:
+
+```bash
+docker-compose run app pytest
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
