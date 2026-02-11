@@ -15,37 +15,9 @@
 
 The system follows a microservices-based architecture powered by Docker containers.
 
-```mermaid
-graph TD
-    Client[Client / User] -->|HTTP Request| API[FastAPI Application]
-    
-    subgraph "Core Services"
-        API -->|Logging| Logs[Structured Logging]
-        API -->|Metrics| Prom[Prometheus]
-        API -->|Task Queue| Redis[Redis]
-    end
-    
-    subgraph "Agentic Workflow (CrewAI)"
-        API -->|Trigger| Crew[OpsCrew\n(Manager)]
-        Crew --> Agent1[Log Analyst Agent]
-        Crew --> Agent2[RCA Agent]
-        Crew --> Agent3[Fix Suggester Agent]
-        Crew --> Agent4[Report Generator Agent]
-    end
-    
-    subgraph "Data Layer"
-        Crew -->|Vector Search| DB[(PostgreSQL + pgvector)]
-        API -->|CRUD| DB
-    end
+<img width="2631" height="838" alt="Untitled-2026-02-07-1602" src="https://github.com/user-attachments/assets/50e71414-8488-4413-b37f-8216166e4f62" />
 
-    classDef service fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef agent fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef db fill:#bfb,stroke:#333,stroke-width:2px;
-    
-    class API,Redis,Prom service;
-    class Agent1,Agent2,Agent3,Agent4,Crew agent;
-    class DB db;
-```
+
 
 > **Note**: This diagram handles high-level data flow. You can copy the Mermaid code above and paste it into [Excalidraw](https://excalidraw.com/) (using the "Mermaid" tool) for further editing.
 
