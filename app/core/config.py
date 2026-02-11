@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     GOOGLE_API_KEY: str
     GEMINI_MODEL_NAME: str = "gemini-pro"
-    GEMINI_EMBEDDING_MODEL: str = "models/text-embedding-004"
+    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
 
     class Config:
         env_file = ".env"
