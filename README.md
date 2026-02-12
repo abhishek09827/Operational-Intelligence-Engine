@@ -84,3 +84,18 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## Output Screen Shorts
+
+![1](https://github.com/user-attachments/assets/ae895f9a-3ca7-491d-a364-420ddd8eaefe)
+
+![2](https://github.com/user-attachments/assets/ba317990-b230-44cb-9e42-2b8ae4581753)
+
+![3](https://github.com/user-attachments/assets/d0d232b4-2f9b-4652-99a8-fbdb4ca12d9c)
+
+![4](https://github.com/user-attachments/assets/c7a30b0f-589d-4aab-b093-27349eb28a65)
+
+![5](https://github.com/user-attachments/assets/2a6b342a-c6c4-4108-9ea3-7386c347a4a1)
+
+![6](https://github.com/user-attachments/assets/8c1570e8-31a5-4484-a128-40e64a0e2e8f)
+
+
