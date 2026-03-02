@@ -15,6 +15,7 @@ class IncidentUpdate(BaseModel):
     suggested_fix: Optional[str] = None
     confidence_score: Optional[float] = None
     status: Optional[str] = None
+    thinking_process: Optional[str] = None
 
 class IncidentResponse(IncidentBase):
     id: int
@@ -23,6 +24,7 @@ class IncidentResponse(IncidentBase):
     root_cause: Optional[str] = None
     suggested_fix: Optional[str] = None
     confidence_score: Optional[float] = None
+    thinking_process: Optional[str] = None
 
     class Config:
         from_attributes = True

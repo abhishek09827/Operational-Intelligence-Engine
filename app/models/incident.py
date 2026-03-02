@@ -18,6 +18,9 @@ class Incident(Base):
     suggested_fix = Column(Text, nullable=True)
     confidence_score = Column(Float, nullable=True)
     
+    # Crew AI thinking process logs
+    thinking_process = Column(Text, nullable=True)
+    
     # RAG Embeddings stored as JSON string (list of floats)
     # This avoids dimension mismatch issues and makes the system more flexible
     embedding = Column(JSON, nullable=True)

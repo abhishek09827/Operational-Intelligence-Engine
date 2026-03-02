@@ -23,6 +23,8 @@ def run_analysis_task(incident_id: int, logs: str, db: Session):
 from app.core.cache import cache
 import hashlib
 import json
+import io
+import sys
 
 @router.post("/analyze", response_model=IncidentResponse)
 def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
@@ -45,10 +47,10 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
         title="Automated Analysis", 
         description="Incident created from log analysis request",
         status="Analyzing",
-        severity="Medium"
-        # root_cause = "",
-        # suggested_fix = "",
-        # confidence_score = "" 
+        severity="Medium",
+        root_cause = "",
+        suggested_fix = "",
+        confidence_score = None
     )
     db.add(incident)
     db.commit()
@@ -59,13 +61,35 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
     cache_key = f"crew_result:{hashlib.md5(request.logs.encode()).hexdigest()}"
     analysis_result = cache.get(cache_key)
     
+    # Capture crew output
+    crew_output = []
+    
     if not analysis_result:
         # Initialize Crew with DB session for RAG
         crew = OpsCrew(incident_id=str(incident.id), logs_content=request.logs, db_session=db)
-        result = crew.run()
+        
+        # Capture stdout to display thinking process
+        old_stdout = sys.stdout
+        sys.stdout = captured_output = io.StringIO()
+        
+        try:
+            result = crew.run()
+            # Get the captured output
+            captured_text = captured_output.getvalue()
+        finally:
+            sys.stdout = old_stdout
+        
+        # Parse captured output into structured logs
+        for line in captured_text.split('\n'):
+            if line.strip():
+                crew_output.append(line)
+        
         analysis_result = str(result)
         # Cache the result for 24 hours
         cache.set(cache_key, analysis_result, ttl=86400)
+    else:
+        # If cached, we can still provide a "thinking" placeholder
+        crew_output = ["🤖 Loading cached analysis..."]
     
     # 3. Parse and Update Incident
     # Parse the JSON analysis result from CrewAI
@@ -99,9 +123,11 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
                 # Get severity from first analysis entry (not all)
                 severity = analysis_data['analysis'][0].get('severity', 'MEDIUM')
                 incident.severity = severity
-                # incident.root_cause = analysis_data['analysis'][0].get('root_cause', '')
-                # incident.confidence_score = analysis_data['analysis'][0].get('confidence_score', '')
-                # incident.suggested_fix = analysis_data['analysis'][0].get('prevention_strategy', '')
+                incident.root_cause = analysis_data['analysis'][0].get('root_cause', '')
+                # Convert confidence_score to float if available, None otherwise
+                confidence_val = analysis_data['analysis'][0].get('confidence_score')
+                incident.confidence_score = float(confidence_val) if confidence_val is not None else None
+                incident.suggested_fix = analysis_data['analysis'][0].get('prevention_strategy', '')
                 
                 # Format as visually appealing markdown for frontend
                 def format_analysis_as_markdown(analysis_dict):
@@ -145,6 +171,7 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
         incident.root_cause = cleaned_result if 'cleaned_result' in locals() else analysis_result
     
     incident.status = "Analyzed"
+    incident.thinking_process = "\n".join(crew_output)
     
     # Generate embedding for future retrieval
     vector_service = VectorDBService(db)

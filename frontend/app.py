@@ -139,12 +139,81 @@ def show_incident_card(incident):
         st.markdown("---")
         
         # Tabs for detailed view
-        tab1, tab2 = st.tabs(["ROOT CAUSE ANALYSIS", "RAW DATA"])
+        tab1, tab2, tab3 = st.tabs(["ROOT CAUSE ANALYSIS", "🧠 AI THINKING PROCESS", "RAW DATA"])
         
         with tab1:
             st.markdown(incident.get("description", "*Analysis pending or unavailable.*"))
             
         with tab2:
+            # Interactive Thinking Process Visualization
+            thinking_process = incident.get("thinking_process", "")
+            if thinking_process:
+                st.subheader("🤖 Crew AI Agent Thinking Process")
+                
+                # Parse and categorize thinking steps
+                steps = []
+                current_step = None
+                current_content = []
+                
+                for line in thinking_process.split('\n'):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    
+                    # Check for step markers
+                    if any(keyword in line.upper() for keyword in ["STEP", "PHASE", "TASK", "AGENT", "START", "END"]):
+                        if current_step:
+                            steps.append({
+                                'title': current_step,
+                                'content': '\n'.join(current_content),
+                                'type': 'marker'
+                            })
+                        current_step = line
+                        current_content = []
+                    elif current_step:
+                        current_content.append(line)
+                    else:
+                        # Treat as content
+                        if not steps or steps[-1]['type'] == 'content':
+                            steps.append({
+                                'title': 'Analysis',
+                                'content': line,
+                                'type': 'content'
+                            })
+                        else:
+                            steps[-1]['content'] += '\n' + line
+                
+                # Add final step
+                if current_step:
+                    steps.append({
+                        'title': current_step,
+                        'content': '\n'.join(current_content),
+                        'type': 'marker'
+                    })
+                elif current_content:
+                    steps.append({
+                        'title': 'Analysis Complete',
+                        'content': '\n'.join(current_content),
+                        'type': 'final'
+                    })
+                
+                # Render steps with icons and colors
+                for idx, step in enumerate(steps):
+                    with st.expander(f"{'▶️' if step['type'] == 'marker' else '✅'} {step['title']}", expanded=True):
+                        if step['content']:
+                            st.markdown(f"```text\n{step['content']}\n```")
+                        
+                        # Add visual flow indicator
+                        if idx < len(steps) - 1:
+                            st.markdown("---")
+                
+                # Terminal-style log viewer at the bottom
+                st.markdown("### 📋 Full Log Output")
+                st.code(thinking_process, language='text')
+            else:
+                st.info("No thinking process data available. Analysis was likely cached.")
+            
+        with tab3:  # Raw data tab
             st.json(incident)
 
 # --- PAGE: NEW ANALYSIS ---
