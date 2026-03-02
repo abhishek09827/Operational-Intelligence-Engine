@@ -142,7 +142,7 @@ def show_incident_card(incident):
         tab1, tab2 = st.tabs(["ROOT CAUSE ANALYSIS", "RAW DATA"])
         
         with tab1:
-            st.markdown(incident.get("root_cause", "*Analysis pending or unavailable.*"))
+            st.markdown(incident.get("description", "*Analysis pending or unavailable.*"))
             
         with tab2:
             st.json(incident)
@@ -178,6 +178,7 @@ if page == "New Analysis":
                     status_container.update(label="Analysis Complete", state="complete", expanded=False)
                     
                     incident = response.json()
+                    print(incident)
                     st.toast("New incident analysis ready!", icon="🎉")
                     show_incident_card(incident)
                 else:

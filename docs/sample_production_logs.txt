@@ -1,0 +1,201 @@
+## Realistic Raw Production Logs
+
+### Log Entry 1: API Error - Database Connection Pool Exhausted
+
+2024-03-01T14:30:22.123Z ERROR order-service [production] req=req_12345
+Transaction ID: txn_order_001
+HTTP Method: POST
+Endpoint: /api/v1/orders/create
+HTTP Status: 500 Internal Server Error
+Error Code: INTERNAL_SERVER_ERROR
+Client IP: 192.168.1.100
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+Request ID: req_12345
+Trace ID: trace_abc123
+Response Time: 5234ms
+Error Message: Database connection pool exhausted - maximum 48 connections reached
+Stack Trace:
+Error: Can't connect to MySQL server through socket '/var/run/mysqld/mysqld.sock'
+    at Connection._initializeConnection (node_modules/mysql2/promise/lib/connection.js:419:11)
+    at Connection.connect (node_modules/mysql2/promise/lib/connection.js:149:10)
+    at processTicksAndRejections (node_modules/internal/modules/cjs/loader.js:793:5)
+    at async OrderService.createOrder (app/services/order-service.js:245:10)
+    at async OrderController.create (app/controllers/order-controller.js:89:22)
+    at async RequestHandler.handle (app/middleware/request-handler.js:156:15)
+User ID: user_789
+Order Amount: 299.99
+Order Items Count: 3
+Payment Method: credit_card
+
+---
+
+### Log Entry 2: Payment Failure - Insufficient Funds
+
+2024-03-01T14:31:15.456Z ERROR payment-service [production] req=req_67890
+Transaction ID: txn_abc123xyz
+Amount: 299.99 USD
+Currency: USD
+Payment Method: credit_card
+Failure Reason: insufficient_funds
+Raw Gateway Response: Declined: Insufficient funds (Transaction #txn_abc123xyz)
+User notified of payment failure
+Transaction Timestamp: 2024-03-01T14:31:15.456Z
+Retry Attempts: 0
+Status: FAILED
+Payment Provider: stripe
+
+---
+
+### Log Entry 3: Timeout - Third-Party Service
+
+2024-03-01T14:32:10.789Z ERROR inventory-service [production] req=req_99999
+Operation: get_inventory_level
+Endpoint: /api/inventory/items/12345
+Timeout Duration: 5000ms
+Retry Count: 3
+Last Retry Attempt: 2024-03-01T14:32:05.678Z
+Original Timeout: 2024-03-01T14:32:05.678Z
+User Wait Time: 15000ms
+Error Message: Operation exceeded 5000ms timeout after 3 retry attempts
+Service: inventory-service
+Environment: production
+Request ID: req_99999
+Timeout Type: connection_timeout
+Backend Service: third-party-inventory-api
+
+---
+
+### Log Entry 4: Rate Limit - Bulk Report Generation
+
+2024-03-01T14:33:05.012Z WARN api-gateway [production] req=req_00001
+Rate Limit Configuration: 1000 requests/hour
+Current Rate: 0 requests/hour
+Remaining Requests: 1000
+Rate Limit Window: 1 hour
+Reset Time: 2024-03-01T15:00:00.000Z
+Endpoint: /api/v1/reports/generate
+Method: POST
+Request ID: req_00001
+User ID: user_payment_123
+Report Type: financial_summary
+Rate Limit Type: per_endpoint
+Current Timestamp: 2024-03-01T14:33:05.012Z
+
+---
+
+### Log Entry 5: Dependency Failure - Circuit Breaker Triggered
+
+2024-03-01T14:34:20.345Z ERROR checkout-service [production] req=req_11111
+Dependency: payment_service
+Dependency Status: DOWN
+Error Type: 503 Service Unavailable
+Affected Services: [checkout, billing]
+Circuit Breaker State: OPEN
+Retry Strategy: exponential_backoff
+Last Error: payment service returned 503 after 5 consecutive 502 errors
+User Impact: checkout flow blocked for all users
+Retry Attempts: 0
+Service Health: CRITICAL
+Detection Method: health_check
+
+---
+
+### Log Entry 6: Another API Error - Validation Failed
+
+2024-03-01T14:35:30.678Z ERROR user-service [production] req=req_22222
+HTTP Method: PUT
+Endpoint: /api/v1/users/profile
+HTTP Status: 400 Bad Request
+Error Code: VALIDATION_ERROR
+Validation Field: email
+Expected Format: email@example.com
+Actual Value: invalid-email-format
+Request ID: req_22222
+User ID: user_456
+IP Address: 10.0.0.1
+Response Time: 234ms
+Validation Errors: 3 total
+Timestamp: 2024-03-01T14:35:30.678Z
+
+---
+
+### Log Entry 7: Timeout - Cache Miss
+
+2024-03-01T14:36:45.901Z ERROR analytics-service [production] req=req_33333
+Operation: get_user_behavior_data
+Operation Type: read
+Cache Status: MISS
+Cache Key: user_behavior:user_789:today
+Cache Duration: 3600s
+Timeout Duration: 3000ms
+Retry Count: 2
+Total Operation Time: 9000ms
+Error Message: Cache operation timed out while fetching user behavior data
+Database Query: SELECT * FROM user_behavior WHERE user_id = ?
+Query Parameters: [user_789]
+Database Connection: pool_5
+Connection Time: 1500ms
+Query Execution Time: 1500ms
+Service: analytics-service
+Environment: production
+
+---
+
+### Log Entry 8: Rate Limit - API Throttling
+
+2024-03-01T14:37:50.234Z ERROR search-service [production] req=req_44444
+Rate Limit Policy: 100 requests/minute
+Current Rate: 101 requests/minute
+Exceeded By: 1 request
+Limit Type: sliding_window
+Window Duration: 1 minute
+Endpoint: /api/v1/search
+Method: GET
+Search Query: "operational intelligence"
+Request ID: req_44444
+User ID: user_search_789
+Client IP: 203.0.113.45
+Retry After: 1 second
+Status: RATE_LIMIT_EXCEEDED
+Timestamp: 2024-03-01T14:37:50.234Z
+
+---
+
+### Log Entry 9: Payment Failure - Expired Card
+
+2024-03-01T14:38:05.567Z ERROR payment-service [production] req=req_55555
+Transaction ID: txn_def456ghi
+Amount: 99.99 USD
+Currency: USD
+Payment Method: credit_card
+Failure Reason: expired
+Card Number: 4111********1111
+Card Brand: Visa
+Card Expiry: 12/23
+Transaction Time: 2024-03-01T14:38:05.567Z
+Response Code: 402
+Failure Reason: payment_method_expired
+Fallback Attempted: false
+User Notified: true
+Error Message: Payment card has expired
+Timestamp: 2024-03-01T14:38:05.567Z
+
+---
+
+### Log Entry 10: Dependency Failure - DNS Resolution
+
+2024-03-01T14:39:12.890Z ERROR email-service [production] req=req_66666
+Dependency: smtp.gmail.com
+Connection Type: outbound
+Error Type: dns_resolution_failed
+Affected Services: [email-service, notification-service]
+Retry Strategy: immediate
+Last Error: Failed to resolve smtp.gmail.com
+Affected Services: [email-service, notification-service]
+Service Health: DEGRADED
+Detection Method: connection_attempt
+Timeout: 5000ms
+DNS Servers Used: [8.8.8.8, 8.8.4.4]
+Resolution Attempts: 3
+Resolution Status: FAILED
+Timestamp: 2024-03-01T14:39:12.890Z

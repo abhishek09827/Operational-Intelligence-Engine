@@ -1,6 +1,6 @@
-# OpsPilot.ai 🚀
+# Operational Intelligence Engine 🚀
 
-**OpsPilot.ai** is an advanced, agentic AI assistant designed to streamline Incident Response and SRE workflows. Leveraging the power of CrewAI, RAG (Retrieval-Augmented Generation), and modern LLMs (Google Gemini), OpsPilot automates log analysis, root cause identification, and remediation planning.
+**Operational Intelligence Engine** is an advanced, agentic AI assistant designed to streamline Incident Response and SRE workflows. Leveraging the power of CrewAI, RAG (Retrieval-Augmented Generation), and modern LLMs (Google Gemini), the system automates log analysis, root cause identification, and remediation planning.
 
 ## 🌟 Features
 
@@ -15,9 +15,37 @@
 
 The system follows a microservices-based architecture powered by Docker containers.
 
-<img width="2631" height="838" alt="Untitled-2026-02-07-1602" src="https://github.com/user-attachments/assets/50e71414-8488-4413-b37f-8216166e4f62" />
+```mermaid
+graph TD
+    Client[Client / User] -->|HTTP Request| API[FastAPI Application]
+    
+    subgraph "Core Services"
+        API -->|Logging| Logs[Structured Logging]
+        API -->|Metrics| Prom[Prometheus]
+        API -->|Task Queue| Redis[Redis]
+    end
+    
+    subgraph "Agentic Workflow (CrewAI)"
+        API -->|Trigger| Crew[OpsCrew\n(Manager)]
+        Crew --> Agent1[Log Analyst Agent]
+        Crew --> Agent2[RCA Agent]
+        Crew --> Agent3[Fix Suggester Agent]
+        Crew --> Agent4[Report Generator Agent]
+    end
+    
+    subgraph "Data Layer"
+        Crew -->|Vector Search| DB[(PostgreSQL + pgvector)]
+        API -->|CRUD| DB
+    end
 
-
+    classDef service fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef agent fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef db fill:#bfb,stroke:#333,stroke-width:2px;
+    
+    class API,Redis,Prom service;
+    class Agent1,Agent2,Agent3,Agent4,Crew agent;
+    class DB db;
+```
 
 > **Note**: This diagram handles high-level data flow. You can copy the Mermaid code above and paste it into [Excalidraw](https://excalidraw.com/) (using the "Mermaid" tool) for further editing.
 
@@ -43,8 +71,8 @@ The system follows a microservices-based architecture powered by Docker containe
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/OpsPilot.ai.git
-   cd OpsPilot.ai
+   git clone https://github.com/abhishek09827/Operational-Intelligence-Engine.git
+   cd Operational-Intelligence-Engine
    ```
 
 2. **Configure Environment**:
@@ -83,19 +111,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-## Output Screen Shorts
-
-![1](https://github.com/user-attachments/assets/ae895f9a-3ca7-491d-a364-420ddd8eaefe)
-
-![2](https://github.com/user-attachments/assets/ba317990-b230-44cb-9e42-2b8ae4581753)
-
-![3](https://github.com/user-attachments/assets/d0d232b4-2f9b-4652-99a8-fbdb4ca12d9c)
-
-![4](https://github.com/user-attachments/assets/c7a30b0f-589d-4aab-b093-27349eb28a65)
-
-![5](https://github.com/user-attachments/assets/2a6b342a-c6c4-4108-9ea3-7386c347a4a1)
-
-![6](https://github.com/user-attachments/assets/8c1570e8-31a5-4484-a128-40e64a0e2e8f)
-
 

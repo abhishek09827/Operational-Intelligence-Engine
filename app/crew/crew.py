@@ -22,27 +22,22 @@ class OpsCrew:
         if similar_incidents:
             history_context = "\n\nRELATED HISTORICAL INCIDENTS:\n"
             for inc in similar_incidents:
-                history_context += f"- Date: {inc.created_at}, Title: {inc.title}, Root Cause: {inc.root_cause}, Fix: {inc.suggested_fix}\n"
+                history_context += f"- Date: {inc.created_at}, Title: {inc.title}, Root Cause: {inc.root_cause}\n"
 
-        # Instantiate Agents
-        log_analyst = self.agents.log_analysis_agent()
-        root_cause_analyst = self.agents.root_cause_agent()
-        fix_suggester = self.agents.fix_suggester_agent()
-        reporter = self.agents.report_generator_agent()
+        # Use the specialized log analysis agent
+        log_analyst = self.agents.api_error_agent()
 
         # Instantiate Tasks
-        # Inject history into the first task
+        # Inject history into the task
         logs_with_history = f"{self.logs_content}\n{history_context}"
         
+        # Create analysis task ONLY - no report generator, no validation
         analysis_task = self.tasks.analyze_logs_task(log_analyst, logs_with_history)
-        root_cause_task = self.tasks.identify_root_cause_task(root_cause_analyst, [analysis_task])
-        fix_task = self.tasks.suggest_fix_task(fix_suggester, [root_cause_task])
-        report_task = self.tasks.generate_report_task(reporter, [analysis_task, root_cause_task, fix_task])
 
         # Form the Crew
         crew = Crew(
-            agents=[log_analyst, root_cause_analyst, fix_suggester, reporter],
-            tasks=[analysis_task, root_cause_task, fix_task, report_task],
+            agents=[log_analyst],
+            tasks=[analysis_task],
             process=Process.sequential,
             verbose=True
         )
