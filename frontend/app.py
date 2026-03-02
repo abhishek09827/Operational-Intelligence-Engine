@@ -148,7 +148,7 @@ def show_incident_card(incident):
             # Interactive Thinking Process Visualization
             thinking_process = incident.get("thinking_process", "")
             if thinking_process:
-                st.subheader("🤖 Crew AI Agent Thinking Process")
+                st.subheader("🤖 Crew Agent Thinking Process")
                 
                 # Parse and categorize thinking steps
                 steps = []
