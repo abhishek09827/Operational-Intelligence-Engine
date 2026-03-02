@@ -210,7 +210,7 @@ elif page == "Dashboard & History":
                 open_incidents = len(df[df['status'] != 'Resolved']) # Assuming Resolved exists, otherwise just count
                 m2.metric("Open Cases", open_incidents)
                 
-                critical_count = len(df[df['severity'] == 'Critical'])
+                critical_count = len(df[df['severity'] == 'CRITICAL'])
                 m3.metric("Critical Issues", critical_count, delta_color="inverse")
                 
                 st.markdown("---")
