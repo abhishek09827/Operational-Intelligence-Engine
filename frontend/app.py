@@ -155,57 +155,57 @@ def show_incident_card(incident):
                 current_step = None
                 current_content = []
                 
-                for line in thinking_process.split('\n'):
-                    line = line.strip()
-                    if not line:
-                        continue
+                # for line in thinking_process.split('\n'):
+                #     line = line.strip()
+                #     if not line:
+                #         continue
                     
-                    # Check for step markers
-                    if any(keyword in line.upper() for keyword in ["STEP", "PHASE", "TASK", "AGENT", "START", "END"]):
-                        if current_step:
-                            steps.append({
-                                'title': current_step,
-                                'content': '\n'.join(current_content),
-                                'type': 'marker'
-                            })
-                        current_step = line
-                        current_content = []
-                    elif current_step:
-                        current_content.append(line)
-                    else:
-                        # Treat as content
-                        if not steps or steps[-1]['type'] == 'content':
-                            steps.append({
-                                'title': 'Analysis',
-                                'content': line,
-                                'type': 'content'
-                            })
-                        else:
-                            steps[-1]['content'] += '\n' + line
+                #     # Check for step markers
+                #     if any(keyword in line.upper() for keyword in ["STEP", "PHASE", "TASK", "AGENT", "START", "END"]):
+                #         if current_step:
+                #             steps.append({
+                #                 'title': current_step,
+                #                 'content': '\n'.join(current_content),
+                #                 'type': 'marker'
+                #             })
+                #         current_step = line
+                #         current_content = []
+                #     elif current_step:
+                #         current_content.append(line)
+                #     else:
+                #         # Treat as content
+                #         if not steps or steps[-1]['type'] == 'content':
+                #             steps.append({
+                #                 'title': 'Analysis',
+                #                 'content': line,
+                #                 'type': 'content'
+                #             })
+                #         else:
+                #             steps[-1]['content'] += '\n' + line
                 
-                # Add final step
-                if current_step:
-                    steps.append({
-                        'title': current_step,
-                        'content': '\n'.join(current_content),
-                        'type': 'marker'
-                    })
-                elif current_content:
-                    steps.append({
-                        'title': 'Analysis Complete',
-                        'content': '\n'.join(current_content),
-                        'type': 'final'
-                    })
+                # # Add final step
+                # if current_step:
+                #     steps.append({
+                #         'title': current_step,
+                #         'content': '\n'.join(current_content),
+                #         'type': 'marker'
+                #     })
+                # elif current_content:
+                #     steps.append({
+                #         'title': 'Analysis Complete',
+                #         'content': '\n'.join(current_content),
+                #         'type': 'final'
+                #     })
                 
-                # Render steps with icons and colors
-                for idx, step in enumerate(steps):
-                    with st.expander(f"{'▶️' if step['type'] == 'marker' else '✅'} {step['title']}", expanded=True):
-                        if step['content']:
-                            st.markdown(f"```text\n{step['content']}\n```")
+                # # Render steps with icons and colors
+                # for idx, step in enumerate(steps):
+                #     with st.expander(f"{'▶️' if step['type'] == 'marker' else '✅'} {step['title']}", expanded=True):
+                #         if step['content']:
+                #             st.markdown(f"```text\n{step['content']}\n```")
                         
-                        # Add visual flow indicator
-                        if idx < len(steps) - 1:
-                            st.markdown("---")
+                #         # Add visual flow indicator
+                #         if idx < len(steps) - 1:
+                #             st.markdown("---")
                 
                 # Terminal-style log viewer at the bottom
                 st.markdown("### 📋 Full Log Output")
