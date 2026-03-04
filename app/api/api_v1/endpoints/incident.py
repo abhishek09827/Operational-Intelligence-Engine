@@ -36,6 +36,61 @@ def run_analysis_task(incident_id: int, logs: str, db: Session):
 from app.core.cache import cache
 import hashlib
 
+def format_analysis_as_markdown(analysis_data: dict) -> str:
+    """Convert analysis JSON to formatted markdown for frontend"""
+    analysis_list = analysis_data.get('analysis', [])
+    if not analysis_list:
+        return "No analysis available"
+    
+    # Get first analysis entry
+    analysis = analysis_list[0]
+    
+    severity = analysis.get('severity', 'MEDIUM')
+    category = analysis.get('category', 'N/A')
+    
+    md = f"""## 🔍 Incident Analysis
+
+### Summary
+- **Category**: `{category}`
+- **Severity**: {severity}
+- **Log ID**: `{analysis.get('log_id', 'N/A')}`
+- **Confidence**: {analysis.get('confidence_score', 0.0):.1%}"""
+
+    if analysis.get('root_cause'):
+        md += f"\n\n### 🔥 Root Cause\n\n{analysis['root_cause']}"
+
+    if analysis.get('detailed_explanation'):
+        md += f"\n\n### 📖 Detailed Explanation\n\n{analysis['detailed_explanation']}"
+
+    if analysis.get('primary_cause'):
+        md += f"\n\n### ⚙️ Primary Cause\n\n{analysis['primary_cause']}"
+
+    if analysis.get('secondary_symptoms'):
+        symptoms = "\n".join(f"- {s}" for s in analysis['secondary_symptoms'][:3])
+        md += f"\n\n### ⛓️ Secondary Symptoms\n\n{symptoms}"
+
+    if analysis.get('user_impact'):
+        md += f"\n\n### 👥 User Impact\n\n{analysis['user_impact']}"
+
+    if analysis.get('orchestration_behavior'):
+        md += f"\n\n### 🔄 System Behavior\n\n{analysis['orchestration_behavior']}"
+
+    if analysis.get('recommended_fix'):
+        md += f"\n\n### 🛠️ Recommended Fix\n\n{analysis['recommended_fix']}"
+
+    if analysis.get('prevention_strategy'):
+        md += f"\n\n### 🛡️ Prevention Strategy\n\n{analysis['prevention_strategy']}"
+
+    if analysis.get('affected_services'):
+        services = ", ".join(analysis['affected_services'])
+        md += f"\n\n### ⚡ Affected Services\n\n{services}"
+
+    if analysis.get('suggested_monitoring'):
+        metrics = "\n".join(f"- {m}" for m in analysis['suggested_monitoring'])
+        md += f"\n\n### 📊 Suggested Monitoring\n\n{metrics}"
+
+    return md
+
 @router.post("/analyze", response_model=IncidentResponse)
 def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
     """
@@ -144,20 +199,22 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
         
         # Extract severity and root_cause from first analysis entry
         if len(analysis_list) > 0:
-            severity = analysis_list[0].get('severity', 'MEDIUM')
+            severity = analysis_list[0].get('severity', 'mid')
+            print(severity + "sev123")
             incident.severity = severity
+            print(incident.severity + "sev123")
             incident.root_cause = analysis_list[0].get('root_cause', '')
             
             # Format as visually appealing markdown for frontend
-            def format_analysis_as_markdown(analysis_dict):
+            def format_analysis_as_markdown_local(analysis_dict):
                 """Convert analysis JSON to formatted markdown for frontend"""
                 md = f"""## 🔴 Critical Incident Detected
 
-### Summary
-- **Category**: `{analysis_dict.get('category', 'N/A')}`
-- **Severity**: {severity}
-- **Log ID**: `{analysis_dict.get('log_id', 'N/A')}`
-- **Confidence**: {analysis_dict.get('confidence_score', 0.0)}"""
+                ### Summary
+                - **Category**: `{analysis_dict.get('category', 'N/A')}`
+                - **Severity**: {severity}
+                - **Log ID**: `{analysis_dict.get('log_id', 'N/A')}`
+                - **Confidence**: {analysis_dict.get('confidence_score', 0.0)}"""
 
                 if analysis_dict.get('root_cause'):
                     md += f"\n\n### 🔍 Root Cause\n\n{analysis_dict.get('root_cause')}"
@@ -178,12 +235,17 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
 
                 return md
 
-            incident.description = format_analysis_as_markdown(analysis_list[0])
+            incident.description = format_analysis_as_markdown_local(analysis_list[0])
         else:
+            severity = analysis_list[0].get('severity', 'mid')
+            print(severity + "sev123")
+            incident.severity = severity
+            print(incident.severity + "sev123")
             incident.root_cause = cleaned_result
             
     except json.JSONDecodeError:
         # If not valid JSON, store cleaned result
+        print(incident.severity + "sev123")
         incident.root_cause = cleaned_result if 'cleaned_result' in locals() else analysis_result
     
     incident.status = "Analyzed"
@@ -362,17 +424,77 @@ async def stream_analyze_logs(
                     
                     crew_output.append(crew_text)
                     
-                    # Send analysis update with CrewAI results
-                    payload = {
-                        "type": "analysis_update",
-                        "incident_id": log_entry.id,
-                        "log_count": log_count,
-                        "status": "Analyzed",
-                        "severity": log['level'],  # Keep the log's original severity
-                        "thinking_process": "\n".join(crew_output),
-                    }
+                    # Parse CrewAI output (same as /analyze endpoint)
+                    cleaned_result = crew_text.strip()
+                    # Remove any markdown code blocks
+                    if cleaned_result.startswith('```'):
+                        parts = cleaned_result.split('```')
+                        if len(parts) > 1:
+                            cleaned_result = parts[1].strip()
                     
-                    yield f"data: {json.dumps(payload)}\n\n"
+                    # Clean and parse JSON
+                    try:
+                        analysis_data = json.loads(cleaned_result)
+                        
+                        # Check if it's wrapped in 'analysis' key
+                        if 'analysis' in analysis_data and isinstance(analysis_data['analysis'], list):
+                            analysis_list = analysis_data['analysis']
+                        # Or if it's directly an array
+                        elif isinstance(analysis_data, list):
+                            analysis_list = analysis_data
+                        else:
+                            # Assume it's a single object
+                            analysis_list = [analysis_data]
+                        
+                        # Extract severity and root_cause from first analysis entry (same as /analyze)
+                        if len(analysis_list) > 0:
+                            severity = analysis_list[0].get('severity', 'MEDIUM')
+                            incident.severity = severity
+                            incident.root_cause = analysis_list[0].get('root_cause', '')
+                            
+                            # Format as visually appealing markdown for frontend (same as /analyze)
+                            incident.description = format_analysis_as_markdown(analysis_list[0])
+                            
+                            incident.status = "Analyzed"
+                            incident.thinking_process = "\n".join(crew_output)
+                            
+                            # Generate embedding for future retrieval (same as /analyze)
+                            vector_service = VectorDBService(db)
+                            vector_service.store_incident_with_embedding(incident)
+                            
+                            db.commit()
+                            db.refresh(log_entry)
+                        
+                        # Send analysis update with CrewAI results and formatted description
+                        payload = {
+                            "type": "analysis_update",
+                            "incident_id": log_entry.id,
+                            "log_count": log_count,
+                            "status": "Analyzed",
+                            "severity": log['level'],
+                            "description": incident.description,
+                            "thinking_process": "\n".join(crew_output),
+                        }
+                        
+                        yield f"data: {json.dumps(payload)}\n\n"
+                        
+                    except json.JSONDecodeError:
+                        # If not valid JSON, store cleaned result (same as /analyze)
+                        incident.root_cause = cleaned_result if 'cleaned_result' in locals() else cleaned_result
+                        incident.status = "Analyzed (Invalid JSON)"
+                        db.commit()
+                        db.refresh(log_entry)
+                        
+                        payload = {
+                            "type": "analysis_update",
+                            "incident_id": log_entry.id,
+                            "log_count": log_count,
+                            "status": "Analyzed (Invalid JSON)",
+                            "severity": log['level'],
+                            "error": "Failed to parse CrewAI output as JSON",
+                        }
+                        
+                        yield f"data: {json.dumps(payload)}\n\n"
                     
                 except Exception as e:
                     # Fallback if CrewAI fails
@@ -417,16 +539,77 @@ async def stream_analyze_logs(
                 
                 crew_output.append(crew_text)
                 
-                payload = {
-                    "type": "analysis_update",
-                    "incident_id": log_entry.id,
-                    "log_count": log_count,
-                    "status": "Analyzed",
-                    "severity": batch_logs[0]['level'],
-                    "thinking_process": "\n".join(crew_output),
-                }
+                # Parse CrewAI output (same as /analyze endpoint)
+                cleaned_result = crew_text.strip()
+                # Remove any markdown code blocks
+                if cleaned_result.startswith('```'):
+                    parts = cleaned_result.split('```')
+                    if len(parts) > 1:
+                        cleaned_result = parts[1].strip()
                 
-                yield f"data: {json.dumps(payload)}\n\n"
+                # Clean and parse JSON
+                try:
+                    analysis_data = json.loads(cleaned_result)
+                    
+                    # Check if it's wrapped in 'analysis' key
+                    if 'analysis' in analysis_data and isinstance(analysis_data['analysis'], list):
+                        analysis_list = analysis_data['analysis']
+                    # Or if it's directly an array
+                    elif isinstance(analysis_data, list):
+                        analysis_list = analysis_data
+                    else:
+                        # Assume it's a single object
+                        analysis_list = [analysis_data]
+                    
+                    # Extract severity and root_cause from first analysis entry (same as /analyze)
+                    if len(analysis_list) > 0:
+                        severity = analysis_list[0].get('severity', 'MEDIUM')
+                        incident.severity = severity
+                        incident.root_cause = analysis_list[0].get('root_cause', '')
+                        
+                        # Format as visually appealing markdown for frontend (same as /analyze)
+                        incident.description = format_analysis_as_markdown(analysis_list[0])
+                        
+                        incident.status = "Analyzed"
+                        incident.thinking_process = "\n".join(crew_output)
+                        
+                        # Generate embedding for future retrieval (same as /analyze)
+                        vector_service = VectorDBService(db)
+                        vector_service.store_incident_with_embedding(incident)
+                        
+                        db.commit()
+                        db.refresh(log_entry)
+                    
+                    # Send analysis update with CrewAI results and formatted description
+                    payload = {
+                        "type": "analysis_update",
+                        "incident_id": log_entry.id,
+                        "log_count": log_count,
+                        "status": "Analyzed",
+                        "severity": batch_logs[0]['level'],
+                        "description": incident.description,
+                        "thinking_process": "\n".join(crew_output),
+                    }
+                    
+                    yield f"data: {json.dumps(payload)}\n\n"
+                    
+                except json.JSONDecodeError:
+                    # If not valid JSON, store cleaned result (same as /analyze)
+                    incident.root_cause = cleaned_result if 'cleaned_result' in locals() else cleaned_result
+                    incident.status = "Analyzed (Invalid JSON)"
+                    db.commit()
+                    db.refresh(log_entry)
+                    
+                    payload = {
+                        "type": "analysis_update",
+                        "incident_id": log_entry.id,
+                        "log_count": log_count,
+                        "status": "Analyzed (Invalid JSON)",
+                        "severity": batch_logs[0]['level'],
+                        "error": "Failed to parse CrewAI output as JSON",
+                    }
+                    
+                    yield f"data: {json.dumps(payload)}\n\n"
                 
             except Exception as e:
                 payload = {

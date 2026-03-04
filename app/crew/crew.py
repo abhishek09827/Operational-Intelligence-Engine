@@ -13,6 +13,23 @@ class OpsCrew:
         self.agents = OpsAgents()
         self.tasks = OpsTasks()
 
+    def route_to_agent(self, logs_content: str):
+        """Route logs to the most appropriate agent based on error patterns"""
+        log_lines = logs_content.lower()
+        
+        # Define routing rules based on keywords (excludes validation and report agents)
+        if any(keyword in log_lines for keyword in ['payment', 'transaction', 'stripe', 'paypal', 'fraud', 'decline', 'authorization']):
+            return self.agents.payment_failure_agent()
+        elif any(keyword in log_lines for keyword in ['timeout', 'timeout occurred', 'timed out', 'retry attempt', 'circuit breaker']):
+            return self.agents.timeout_agent()
+        elif any(keyword in log_lines for keyword in ['rate limit', '429', 'too many requests', 'quota exceeded', 'throttle']):
+            return self.agents.rate_limit_agent()
+        elif any(keyword in log_lines for keyword in ['dependency', 'downstream', 'external service', 'down', 'unavailable']):
+            return self.agents.dependency_agent()
+        else:
+            # Default to API error agent for general errors
+            return self.agents.api_error_agent()
+
     def run(self):
         # Retrieve historical context
         vector_service = VectorDBService(self.db_session)
@@ -24,20 +41,28 @@ class OpsCrew:
             for inc in similar_incidents:
                 history_context += f"- Date: {inc.created_at}, Title: {inc.title}, Root Cause: {inc.root_cause}\n"
 
-        # Use the specialized log analysis agent
-        log_analyst = self.agents.api_error_agent()
+        # Route to the appropriate agent based on log patterns for initial analysis
+        selected_agent = self.route_to_agent(self.logs_content)
+        analysis_agent = selected_agent
 
-        # Instantiate Tasks
-        # Inject history into the task
-        logs_with_history = f"{self.logs_content}\n{history_context}"
-        
-        # Create analysis task ONLY - no report generator, no validation
-        analysis_task = self.tasks.analyze_logs_task(log_analyst, logs_with_history)
+        # Create analysis task
+        logs_with_history = f"{self.logs_content}\n{history_context}\n\nAgent: {analysis_agent.role}"
+        analysis_task = self.tasks.analyze_logs_task(analysis_agent, logs_with_history)
 
-        # Form the Crew
+        # Create validation task to ensure output quality
+        validation_task = self.tasks.validate_output_task(analysis_agent)
+
+        # Create report generation task to compile final report
+        report_task = self.tasks.generate_report_task(analysis_agent)
+
+        # Form a multi-agent crew for comprehensive analysis
         crew = Crew(
-            agents=[log_analyst],
-            tasks=[analysis_task],
+            agents=[
+                analysis_agent,       # Analyzes the logs
+                self.agents.validation_agent(),  # Validates the output schema
+                self.agents.report_generator_agent()  # Generates final report
+            ],
+            tasks=[analysis_task, validation_task, report_task],
             process=Process.sequential,
             verbose=True
         )

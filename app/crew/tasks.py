@@ -175,11 +175,11 @@ class OpsTasks:
             output_pydantic=None  # Will validate output later
         )
 
-    def validate_output_task(self, agent, analysis_json):
+    def validate_output_task(self, agent):
         """Task to validate LLM output against strict schema"""
         return Task(
             description=dedent(f"""\
-                Validate the following JSON analysis against the strict schema requirements.
+                Validate the output from the previous task (JSON analysis) against the strict schema requirements.
                 
                 SCHEMA REQUIREMENTS:
                 - All required fields must be present (log_id, category, severity, root_cause, detailed_explanation, recommended_fix, prevention_strategy, confidence_score, is_recurrent_pattern, affected_services, suggested_monitoring)
@@ -200,8 +200,7 @@ class OpsTasks:
                 - LOW: 0.70-0.79
                 - NEVER allow 1.0
                 
-                INPUT JSON:
-                {analysis_json}
+                INPUT: The previous task's output (JSON analysis) is automatically available.
                 
                 VALIDATION CHECKLIST:
                 1. Is JSON valid syntax?
@@ -215,24 +214,21 @@ class OpsTasks:
                 9. Is primary cause clearly identified?
                 10. Are user impact and orchestration_behavior described appropriately?
                 
-                Return a JSON object with:
-                - "is_valid": boolean
-                - "warnings": list of strings
-                - "errors": list of strings
-                - "validated_json": the cleaned JSON if valid
+                IMPORTANT: Simply validate the JSON and return it unchanged if it meets all requirements.
+                DO NOT modify the JSON structure - just verify it's correct.
+                DO NOT create validation reports or warnings - just pass through the JSON.
             """),
             agent=agent,
-            expected_output="Validation report with pass/fail status and any issues found."
+            expected_output="The same JSON analysis if valid."
         )
 
-    def generate_report_task(self, agent, validated_analysis):
+    def generate_report_task(self, agent):
         """Task to compile final reports from validated analysis"""
         return Task(
             description=dedent(f"""\
                 Compile a comprehensive operational intelligence report from the validated analysis.
                 
-                INPUT:
-                {validated_analysis}
+                INPUT: The previous task's output (JSON analysis) is automatically available.
                 
                 REPORT STRUCTURE:
                 # Operational Intelligence Report

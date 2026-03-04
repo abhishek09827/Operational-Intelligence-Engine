@@ -142,7 +142,7 @@ def show_incident_card(incident):
         tab1, tab2, tab3 = st.tabs(["ROOT CAUSE ANALYSIS", "🧠 AI THINKING PROCESS", "RAW DATA"])
         
         with tab1:
-            st.markdown(incident.get("description", "*Analysis pending or unavailable.*"))
+            st.markdown(incident.get("root_cause", "*Analysis pending or unavailable.*"))
             
         with tab2:
             # Interactive Thinking Process Visualization
