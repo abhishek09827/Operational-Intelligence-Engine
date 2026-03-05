@@ -19,7 +19,7 @@ import io
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
-
+import hashlib
 router = APIRouter()
 
 def run_analysis_task(incident_id: int, logs: str, db: Session):
@@ -34,7 +34,25 @@ def run_analysis_task(incident_id: int, logs: str, db: Session):
     pass 
 
 from app.core.cache import cache
-import hashlib
+import re
+
+def extract_json_from_text(text: str) -> str:
+    """Extract JSON string from a larger text block by finding outer braces/brackets."""
+    text = str(text).strip()
+    
+    start_obj = text.find('{')
+    start_arr = text.find('[')
+    
+    if start_obj == -1 and start_arr == -1:
+        return text
+        
+    start_idx = start_obj if start_obj != -1 and (start_arr == -1 or start_obj < start_arr) else start_arr
+    end_idx = text.rfind('}') if text[start_idx] == '{' else text.rfind(']')
+    
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        return text[start_idx:end_idx+1]
+    
+    return text
 
 def format_analysis_as_markdown(analysis_data: dict) -> str:
     """Convert analysis JSON to formatted markdown for frontend"""
@@ -128,6 +146,8 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
     
     # Capture crew output
     crew_output = []
+    validation_output = None
+    report_output = None
     
     if not analysis_result:
         # Initialize Crew with DB session for RAG
@@ -138,7 +158,7 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
         sys.stdout = captured_output = io.StringIO()
         
         try:
-            result = crew.run()
+            result, task_outputs = crew.run()
             # Get the captured output
             captured_text = captured_output.getvalue()
         finally:
@@ -149,7 +169,18 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
             if line.strip():
                 crew_output.append(line)
         
-        analysis_result = str(result)
+        # Extract task outputs (validation_output is index 1, report_output is index 2)
+        if task_outputs:
+            if len(task_outputs) > 1:
+                validation_output = task_outputs[1]
+                if hasattr(validation_output, 'raw'):
+                    validation_output = validation_output.raw
+            if len(task_outputs) > 2:
+                report_output = task_outputs[2]
+                if hasattr(report_output, 'raw'):
+                    report_output = report_output.raw
+        
+        analysis_result = str(validation_output) if validation_output else str(result)
         # Cache the result for 24 hours (as string for flexibility)
         cache.set(cache_key, analysis_result, ttl=86400)
     else:
@@ -163,26 +194,8 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
     # 3. Parse and Update Incident
     # Parse the JSON analysis result from CrewAI
     try:
-        # Clean the result - ensure it's a string
-        cleaned_result = str(analysis_result).strip()
-        
-        # Remove leading ```json or ``` if present
-        if cleaned_result.startswith('```'):
-            # Remove everything from first ``` to end
-            parts = cleaned_result.split('```')
-            if len(parts) > 1:
-                cleaned_result = parts[1].strip()
-        
-        # Remove leading "json" on its own line (AI output format)
-        lines = cleaned_result.split('\n')
-        if lines and lines[0].strip() == 'json':
-            cleaned_result = '\n'.join(lines[1:]).strip()
-        
-        # Remove trailing ``` or other text like ```analysis_result
-        if cleaned_result.endswith('```'):
-            parts = cleaned_result.rsplit('```', 1)
-            if len(parts) > 1:
-                cleaned_result = parts[0].strip()
+        # Clean the result - extract JSON
+        cleaned_result = extract_json_from_text(analysis_result)
         
         # Parse as JSON
         analysis_data = json.loads(cleaned_result)
@@ -199,13 +212,21 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
         
         # Extract severity and root_cause from first analysis entry
         if len(analysis_list) > 0:
-            severity = analysis_list[0].get('severity', 'mid')
-            print(severity + "sev123")
-            incident.severity = severity
-            print(incident.severity + "sev123")
-            incident.root_cause = analysis_list[0].get('root_cause', '')
+            # Safely handle potential nested 'analysis' keys or case mismatches
+            analysis_dict = analysis_list[0] if isinstance(analysis_list[0], dict) else {}
             
-            # Format as visually appealing markdown for frontend
+            # CrewAI might output severity, severity_level, etc.
+            severity = analysis_dict.get('severity') or analysis_dict.get('Severity') or analysis_dict.get('level') or 'Medium'
+            incident.severity = severity
+            
+            incident.root_cause = str(report_output) if report_output else analysis_dict.get('root_cause', '')
+            
+            confidence_score = analysis_dict.get('confidence_score') or analysis_dict.get('confidence')
+            if confidence_score is not None:
+                try:
+                    incident.confidence_score = float(confidence_score)
+                except ValueError:
+                    incident.confidence_score = None
             def format_analysis_as_markdown_local(analysis_dict):
                 """Convert analysis JSON to formatted markdown for frontend"""
                 md = f"""## 🔴 Critical Incident Detected
@@ -237,20 +258,16 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
 
             incident.description = format_analysis_as_markdown_local(analysis_list[0])
         else:
-            severity = analysis_list[0].get('severity', 'mid')
-            print(severity + "sev123")
-            incident.severity = severity
-            print(incident.severity + "sev123")
             incident.root_cause = cleaned_result
             
     except json.JSONDecodeError:
         # If not valid JSON, store cleaned result
-        print(incident.severity + "sev123")
         incident.root_cause = cleaned_result if 'cleaned_result' in locals() else analysis_result
     
     incident.status = "Analyzed"
+    print(str(validation_output) + "val123")
+    print(str(report_output) + "rep123")
     incident.thinking_process = "\n".join(crew_output)
-    
     # Generate embedding for future retrieval
     vector_service = VectorDBService(db)
     vector_service.store_incident_with_embedding(incident)
@@ -417,20 +434,28 @@ async def stream_analyze_logs(
                     sys.stdout = captured_output
                     
                     try:
-                        result = crew.run()
+                        result, task_outputs = crew.run()
                         crew_text = captured_output.getvalue()
+                        
+                        validation_output = None
+                        report_output = None
+                        if task_outputs:
+                            if len(task_outputs) > 1:
+                                validation_output = task_outputs[1]
+                                if hasattr(validation_output, 'raw'):
+                                    validation_output = validation_output.raw
+                            if len(task_outputs) > 2:
+                                report_output = task_outputs[2]
+                                if hasattr(report_output, 'raw'):
+                                    report_output = report_output.raw
                     finally:
                         sys.stdout = old_stdout
                     
                     crew_output.append(crew_text)
                     
                     # Parse CrewAI output (same as /analyze endpoint)
-                    cleaned_result = crew_text.strip()
-                    # Remove any markdown code blocks
-                    if cleaned_result.startswith('```'):
-                        parts = cleaned_result.split('```')
-                        if len(parts) > 1:
-                            cleaned_result = parts[1].strip()
+                    raw_result = str(validation_output).strip() if validation_output else str(result).strip()
+                    cleaned_result = extract_json_from_text(raw_result)
                     
                     # Clean and parse JSON
                     try:
@@ -448,9 +473,19 @@ async def stream_analyze_logs(
                         
                         # Extract severity and root_cause from first analysis entry (same as /analyze)
                         if len(analysis_list) > 0:
-                            severity = analysis_list[0].get('severity', 'MEDIUM')
+                            analysis_dict = analysis_list[0] if isinstance(analysis_list[0], dict) else {}
+                            
+                            severity = analysis_dict.get('severity') or analysis_dict.get('Severity') or analysis_dict.get('level') or incident.severity
                             incident.severity = severity
-                            incident.root_cause = analysis_list[0].get('root_cause', '')
+                            
+                            incident.root_cause = str(report_output) if report_output else analysis_dict.get('root_cause', '')
+                            
+                            confidence_score = analysis_dict.get('confidence_score') or analysis_dict.get('confidence')
+                            if confidence_score is not None:
+                                try:
+                                    incident.confidence_score = float(confidence_score)
+                                except ValueError:
+                                    pass
                             
                             # Format as visually appealing markdown for frontend (same as /analyze)
                             incident.description = format_analysis_as_markdown(analysis_list[0])
@@ -532,20 +567,28 @@ async def stream_analyze_logs(
                 sys.stdout = captured_output
                 
                 try:
-                    result = crew.run()
+                    result, task_outputs = crew.run()
                     crew_text = captured_output.getvalue()
+                    
+                    validation_output = None
+                    report_output = None
+                    if task_outputs:
+                        if len(task_outputs) > 1:
+                            validation_output = task_outputs[1]
+                            if hasattr(validation_output, 'raw'):
+                                validation_output = validation_output.raw
+                        if len(task_outputs) > 2:
+                            report_output = task_outputs[2]
+                            if hasattr(report_output, 'raw'):
+                                report_output = report_output.raw
                 finally:
                     sys.stdout = old_stdout
                 
                 crew_output.append(crew_text)
                 
                 # Parse CrewAI output (same as /analyze endpoint)
-                cleaned_result = crew_text.strip()
-                # Remove any markdown code blocks
-                if cleaned_result.startswith('```'):
-                    parts = cleaned_result.split('```')
-                    if len(parts) > 1:
-                        cleaned_result = parts[1].strip()
+                raw_result = str(validation_output).strip() if validation_output else str(result).strip()
+                cleaned_result = extract_json_from_text(raw_result)
                 
                 # Clean and parse JSON
                 try:
@@ -563,9 +606,19 @@ async def stream_analyze_logs(
                     
                     # Extract severity and root_cause from first analysis entry (same as /analyze)
                     if len(analysis_list) > 0:
-                        severity = analysis_list[0].get('severity', 'MEDIUM')
+                        analysis_dict = analysis_list[0] if isinstance(analysis_list[0], dict) else {}
+                        
+                        severity = analysis_dict.get('severity') or analysis_dict.get('Severity') or analysis_dict.get('level') or incident.severity
                         incident.severity = severity
-                        incident.root_cause = analysis_list[0].get('root_cause', '')
+                        
+                        incident.root_cause = str(report_output) if report_output else analysis_dict.get('root_cause', '')
+                        
+                        confidence_score = analysis_dict.get('confidence_score') or analysis_dict.get('confidence')
+                        if confidence_score is not None:
+                            try:
+                                incident.confidence_score = float(confidence_score)
+                            except ValueError:
+                                pass
                         
                         # Format as visually appealing markdown for frontend (same as /analyze)
                         incident.description = format_analysis_as_markdown(analysis_list[0])

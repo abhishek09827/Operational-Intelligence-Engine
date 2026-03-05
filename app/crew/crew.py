@@ -68,4 +68,13 @@ class OpsCrew:
         )
 
         result = crew.kickoff()
-        return result
+        
+        # Capture all task outputs before they're cleared
+        task_outputs = []
+        for task in crew.tasks:
+            if hasattr(task, 'output') and task.output:
+                task_outputs.append(task.output)
+            elif hasattr(task, 'task_output') and task.task_output:
+                task_outputs.append(task.task_output)
+        
+        return result, task_outputs
