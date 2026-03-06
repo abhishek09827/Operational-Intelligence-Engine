@@ -1,73 +1,49 @@
-# Operational Intelligence Engine 🚀
+<div align="center">
+  <h1>Operational Intelligence Engine 🚀</h1>
+  <p><b>An advanced, agentic AI assistant designed to streamline Incident Response and SRE workflows.</b></p>
+</div>
 
-**Operational Intelligence Engine** is an advanced, agentic AI assistant designed to streamline Incident Response and SRE workflows. Leveraging the power of CrewAI, RAG (Retrieval-Augmented Generation), and modern LLMs (Google Gemini), the system automates log analysis, root cause identification, and remediation planning.
+Leveraging the power of CrewAI, RAG (Retrieval-Augmented Generation), and modern LLMs (Google Gemini), the **Operational Intelligence Engine** automates log analysis, root cause identification, and remediation planning, acting as a force multiplier for your operations team.
 
-## 🌟 Features
+---
 
-- **Automated Incident Analysis**: Intelligently parses and analyzes logs to detect anomalies.
-- **Root Cause Analysis (RCA)**: Uses multi-agent collaboration to pinpoint the exact source of failures.
-- **Smart Remediation**: Suggests actionable fixes based on historical data and best practices.
-- **Comprehensive Reporting**: Generates detailed incident reports for post-mortem analysis.
-- **RAG Integration**: search through historical incident data using vector embeddings (pgvector).
-- **Observability**: Built-in Prometheus instrumentation for real-time monitoring.
+## 🌟 Key Features
+
+- **Automated Incident Analysis**: Intelligently parses and analyzes messy, unstructured logs to detect anomalies and extract structured data.
+- **Agentic Root Cause Analysis (RCA)**: Uses multi-agent collaboration via CrewAI to pinpoint the exact source of failures.
+- **Smart Remediation**: Suggests actionable, step-by-step fixes based on historical incident data and SRE best practices.
+- **RAG-Powered Intelligence**: Semantic search across historical incident records using vector embeddings (`pgvector`) to find similar past issues.
+- **Comprehensive Reporting**: Automatically generates detailed incident reports and post-mortems for stakeholders.
+- **Built-in Observability**: Includes Prometheus instrumentation for real-time API monitoring.
 
 ## 🏗️ Architecture
 
-The system follows a microservices-based architecture powered by Docker containers.
+The system follows a microservices-based architecture powered by Docker containers, separating the API layer, the intelligent agentic workflow, and the data storage layer.
 
-```mermaid
-graph TD
-    Client[Client / User] -->|HTTP Request| API[FastAPI Application]
-    
-    subgraph "Core Services"
-        API -->|Logging| Logs[Structured Logging]
-        API -->|Metrics| Prom[Prometheus]
-        API -->|Task Queue| Redis[Redis]
-    end
-    
-    subgraph "Agentic Workflow (CrewAI)"
-        API -->|Trigger| Crew[OpsCrew\n(Manager)]
-        Crew --> Agent1[Log Analyst Agent]
-        Crew --> Agent2[RCA Agent]
-        Crew --> Agent3[Fix Suggester Agent]
-        Crew --> Agent4[Report Generator Agent]
-    end
-    
-    subgraph "Data Layer"
-        Crew -->|Vector Search| DB[(PostgreSQL + pgvector)]
-        API -->|CRUD| DB
-    end
-
-    classDef service fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef agent fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef db fill:#bfb,stroke:#333,stroke-width:2px;
-    
-    class API,Redis,Prom service;
-    class Agent1,Agent2,Agent3,Agent4,Crew agent;
-    class DB db;
-```
-
-> **Note**: This diagram handles high-level data flow. You can copy the Mermaid code above and paste it into [Excalidraw](https://excalidraw.com/) (using the "Mermaid" tool) for further editing.
+<img width="2631" height="838" alt="Operational Intelligence Engine Architecture" src="https://github.com/user-attachments/assets/50e71414-8488-4413-b37f-8216166e4f62" />
 
 ## 🛠️ Tech Stack
 
-- **Backend Framework**: [FastAPI](https://fastapi.tiangolo.com/)
-- **AI/Agents**: [CrewAI](https://crewai.com/), [LangChain](https://langchain.com/)
-- **LLM**: Google Gemini
-- **Database**: PostgreSQL (with `pgvector` extension)
-- **Caching/Queue**: Redis
-- **Monitoring**: Prometheus
+### Core Technologies
+- **Backend Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python)
+- **AI Orchestration**: [CrewAI](https://crewai.com/), [LangChain](https://langchain.com/)
+- **Large Language Model**: Google Gemini (Pro/Flash)
+
+### Infrastructure & Data
+- **Database**: PostgreSQL (extended with `pgvector` for AI embeddings)
+- **Caching & Task Queue**: Redis
 - **Containerization**: Docker & Docker Compose
+- **Monitoring**: Prometheus
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Docker & Docker Compose
-- Python 3.10+ (for local development)
-- Google AI Studio API Key
+- [Docker & Docker Compose](https://docs.docker.com/get-docker/) installed
+- Python 3.10+ (if developing locally without Docker)
+- A valid [Google Gemini API Key](https://aistudio.google.com/app/apikey)
 
-### Installation
+### Installation & Setup
 
 1. **Clone the repository**:
    ```bash
@@ -75,36 +51,45 @@ graph TD
    cd Operational-Intelligence-Engine
    ```
 
-2. **Configure Environment**:
-   Create a `.env` file in the root directory:
+2. **Configure Environment Variables**:
+   Create a `.env` file in the root directory based on the provided template:
    ```env
    GOOGLE_API_KEY=your_google_api_key_here
    POSTGRES_USER=postgres
    POSTGRES_PASSWORD=postgres
-   POSTGRES_DB=opspilot
-   DATABASE_URL=postgresql://postgres:postgres@db:5432/opspilot
+   POSTGRES_DB=operational_intelligence_engine
+   DATABASE_URL=postgresql://postgres:postgres@db:5432/operational_intelligence_engine
    ```
 
-3. **Run with Docker**:
+3. **Spin up the Infrastructure via Docker**:
    ```bash
    docker-compose up --build -d
    ```
 
-4. **Access the API**:
-   - Swagger UI: `http://localhost:8000/docs`
-   - Health Check: `http://localhost:8000/health`
+4. **Access the Services**:
+   - **Interactive API Docs (Swagger)**: `http://localhost:8000/docs`
+   - **Health Check**: `http://localhost:8000/health`
 
 ## 🧪 Testing
 
-Run typical tests using pytest:
+We use `pytest` for unit and integration testing. To run the test suite within the Docker environment:
 
 ```bash
 docker-compose run app pytest
 ```
 
+## 📸 Screenshots & Output Examples
+
+Here is a glimpse of the Operational Intelligence Engine in action:
+
+| Architecture | Agent Execution | Example Output |
+| :---: | :---: | :---: |
+| ![1](https://github.com/user-attachments/assets/ae895f9a-3ca7-491d-a364-420ddd8eaefe) | ![2](https://github.com/user-attachments/assets/ba317990-b230-44cb-9e42-2b8ae4581753) | ![3](https://github.com/user-attachments/assets/d0d232b4-2f9b-4652-99a8-fbdb4ca12d9c) |
+| ![4](https://github.com/user-attachments/assets/c7a30b0f-589d-4aab-b093-27349eb28a65) | ![5](https://github.com/user-attachments/assets/2a6b342a-c6c4-4108-9ea3-7386c347a4a1) | ![6](https://github.com/user-attachments/assets/8c1570e8-31a5-4484-a128-40e64a0e2e8f) |
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions from the community! If you'd like to improve the Operational Intelligence Engine, please follow these steps:
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -112,3 +97,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+---
+<p align="center">Built with ❤️ for Site Reliability Engineers.</p>
