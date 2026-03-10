@@ -20,6 +20,8 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
+from app.core.cache import cache
+import re
 router = APIRouter()
 
 def run_analysis_task(incident_id: int, logs: str, db: Session):
@@ -32,9 +34,6 @@ def run_analysis_task(incident_id: int, logs: str, db: Session):
     # to return the result immediately to the user, or we can update the DB later.
     # Given the request "return the analysis result", we should wait.
     pass 
-
-from app.core.cache import cache
-import re
 
 def extract_json_from_text(text: str) -> str:
     """Extract JSON string from a larger text block by finding outer braces/brackets."""
@@ -56,23 +55,26 @@ def extract_json_from_text(text: str) -> str:
 
 def format_analysis_as_markdown(analysis_data: dict) -> str:
     """Convert analysis JSON to formatted markdown for frontend"""
-    analysis_list = analysis_data.get('analysis', [])
-    if not analysis_list:
-        return "No analysis available"
-    
-    # Get first analysis entry
-    analysis = analysis_list[0]
-    
-    severity = analysis.get('severity', 'MEDIUM')
-    category = analysis.get('category', 'N/A')
+    # Fix: Handle both wrapped JSON (with 'analysis' key) and single analysis object
+    if 'analysis' in analysis_data and isinstance(analysis_data['analysis'], list):
+        if len(analysis_data['analysis']) > 0:
+            analysis = analysis_data['analysis'][0]
+        else:
+            return "No analysis available"
+    else:
+        # Assume analysis_data is a single analysis object
+        analysis = analysis_data
+
+    severity = analysis.get('severity') or analysis.get('Severity') or analysis.get('level') or 'MEDIUM'
+    category = analysis.get('category') or 'N/A'
     
     md = f"""## 🔍 Incident Analysis
 
-    ### Summary
-    - **Category**: `{category}`
-    - **Severity**: {severity}
-    - **Log ID**: `{analysis.get('log_id', 'N/A')}`
-    - **Confidence**: {analysis.get('confidence_score', 0.0):.1%}"""
+### Summary
+- **Category**: `{category}`
+- **Severity**: {severity}
+- **Log ID**: `{analysis.get('log_id', 'N/A')}`
+- **Confidence**: {analysis.get('confidence_score', 0.0):.1f}%"""
 
     if analysis.get('root_cause'):
         md += f"\n\n### 🔥 Root Cause\n\n{analysis['root_cause']}"
@@ -227,36 +229,7 @@ def analyze_logs(request: AnalysisRequest, db: Session = Depends(get_db)):
                     incident.confidence_score = float(confidence_score)
                 except ValueError:
                     incident.confidence_score = None
-            def format_analysis_as_markdown_local(analysis_dict):
-                """Convert analysis JSON to formatted markdown for frontend"""
-                md = f"""## 🔴 Critical Incident Detected
-
-                ### Summary
-                - **Category**: `{analysis_dict.get('category', 'N/A')}`
-                - **Severity**: {severity}
-                - **Log ID**: `{analysis_dict.get('log_id', 'N/A')}`
-                - **Confidence**: {analysis_dict.get('confidence_score', 0.0)}"""
-
-                if analysis_dict.get('root_cause'):
-                    md += f"\n\n### 🔍 Root Cause\n\n{analysis_dict.get('root_cause')}"
-
-                if analysis_dict.get('detailed_explanation'):
-                    md += f"\n\n### 📝 Detailed Explanation\n\n{analysis_dict.get('detailed_explanation')}"
-
-                if analysis_dict.get('prevention_strategy'):
-                    md += f"\n\n### 🛡️ Prevention Strategy\n\n{analysis_dict.get('prevention_strategy')}"
-
-                if analysis_dict.get('affected_services'):
-                    services = ", ".join(analysis_dict.get('affected_services', []))
-                    md += f"\n\n### ⚡ Affected Services\n\n{services}"
-
-                if analysis_dict.get('suggested_monitoring'):
-                    metrics = "\n".join(f"- {m}" for m in analysis_dict.get('suggested_monitoring', []))
-                    md += f"\n\n### 📊 Suggested Monitoring\n\n{metrics}"
-
-                return md
-
-            incident.description = format_analysis_as_markdown_local(analysis_list[0])
+            incident.description = format_analysis_as_markdown(analysis_dict)
         else:
             incident.root_cause = cleaned_result
             
