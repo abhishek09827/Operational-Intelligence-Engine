@@ -87,6 +87,12 @@ Here is a glimpse of the Operational Intelligence Engine in action:
 | ![1](https://github.com/user-attachments/assets/ae895f9a-3ca7-491d-a364-420ddd8eaefe) | ![2](https://github.com/user-attachments/assets/ba317990-b230-44cb-9e42-2b8ae4581753) | ![3](https://github.com/user-attachments/assets/d0d232b4-2f9b-4652-99a8-fbdb4ca12d9c) |
 | ![4](https://github.com/user-attachments/assets/c7a30b0f-589d-4aab-b093-27349eb28a65) | ![5](https://github.com/user-attachments/assets/2a6b342a-c6c4-4108-9ea3-7386c347a4a1) | ![6](https://github.com/user-attachments/assets/8c1570e8-31a5-4484-a128-40e64a0e2e8f) |
 
+
+[Updates] UI Enhancements
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/42ef46a6-5c04-4f81-a70f-3ddf2ac1b39e" />
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/2453b058-8557-4aac-b05d-6b0be7817d95" />
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/6d72bf28-f052-47fb-87f1-39242307e299" />
+
 ## 🤝 Contributing
 
 We welcome contributions from the community! If you'd like to improve the Operational Intelligence Engine, please follow these steps:
