@@ -84,15 +84,8 @@ Here is a glimpse of the Operational Intelligence Engine in action:
 
 | Architecture | Agent Execution | Example Output |
 | :---: | :---: | :---: |
-| ![1](https://github.com/user-attachments/assets/ae895f9a-3ca7-491d-a364-420ddd8eaefe) | ![2](<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/f41d7852-e6e6-4988-94e1-9e11052828ca" />) | ![3](https://github.com/user-attachments/assets/d0d232b4-2f9b-4652-99a8-fbdb4ca12d9c) |
+| ![1](https://github.com/user-attachments/assets/ae895f9a-3ca7-491d-a364-420ddd8eaefe) | ![2](https://github.com/user-attachments/assets/ba317990-b230-44cb-9e42-2b8ae4581753) | ![3](https://github.com/user-attachments/assets/d0d232b4-2f9b-4652-99a8-fbdb4ca12d9c) |
 | ![4](https://github.com/user-attachments/assets/c7a30b0f-589d-4aab-b093-27349eb28a65) | ![5](https://github.com/user-attachments/assets/2a6b342a-c6c4-4108-9ea3-7386c347a4a1) | ![6](https://github.com/user-attachments/assets/8c1570e8-31a5-4484-a128-40e64a0e2e8f) |
-
-Here is a glimpse of the Updated UI:
-
-| Architecture | Agent Execution | Example Output |
-| :---: | :---: | :---: |
-| ![1](<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/195ade99-be94-43e2-9f49-fa4d03535f69" />) | ![2](https://github.com/user-attachments/assets/ba317990-b230-44cb-9e42-2b8ae4581753) | ![3](<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/c1e5eefc-bce7-492b-85af-54d42ffa69db" />) |
-| ![4](<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/7ec46535-c400-46d6-ba90-1e183afb31db" />) | ![5](https://github.com/user-attachments/assets/2a6b342a-c6c4-4108-9ea3-7386c347a4a1) | ![6](https://github.com/user-attachments/assets/8c1570e8-31a5-4484-a128-40e64a0e2e8f) |
 
 ## 🤝 Contributing
 
