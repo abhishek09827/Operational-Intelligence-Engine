@@ -78,6 +78,49 @@ We use `pytest` for unit and integration testing. To run the test suite within t
 docker-compose run app pytest
 ```
 
+## Benchmarks
+
+The repo now includes a dedicated benchmark suite under `benchmarks/` with the original four OI-Engine measurements:
+
+- Kafka ingestion throughput
+- Two-stage Z-score filtering rate
+- False positive rate on a 200-incident labeled test set
+- End-to-end latency simulation with mocked LLM and JIRA steps
+
+### Install benchmark dependencies
+
+```bash
+pip install -r benchmarks/requirements_bench.txt
+```
+
+`asyncio` is part of the Python standard library, so it does not need to be installed separately.
+
+### Run the suite
+
+```bash
+python benchmarks/benchmark_oie.py
+```
+
+For a faster local smoke test, you can scale the event counts down:
+
+```bash
+python benchmarks/benchmark_oie.py --scale 0.1
+```
+
+### Output
+
+Benchmark artifacts are written to `benchmarks/results/`:
+
+- `benchmark_report.md`
+- `benchmark_3_classification_report.txt`
+- `benchmark_summary.json`
+
+### Fallback behavior
+
+- If Kafka is not running locally, the ingestion benchmark automatically switches to simulation mode and labels the report as `simulated (Kafka not running)`.
+- The latency benchmark is mocked by default. If you set `OIE_BENCH_LLM_PROVIDER=openrouter` and `OPENROUTER_API_KEY`, the suite will try OpenRouter first and fall back to simulation if the provider is unavailable.
+- If any dependency is missing, the benchmark script will continue with a local fallback and record a warning in the report.
+
 ## 📸 Screenshots & Output Examples
 
 Here is a glimpse of the Operational Intelligence Engine in action:
