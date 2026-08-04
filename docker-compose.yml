@@ -1,18 +1,25 @@
-version: '3.8'
-
 services:
   app:
     build: .
+    image: opspilot-app:latest
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     environment:
       - POSTGRES_SERVER=db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=opspilot
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/opspilot
+      - PYTHONPATH=/app
+      # LLM provider config (values come from the root .env file via ${VAR} interpolation)
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GEMINI_MODEL_NAME=${GEMINI_MODEL_NAME:-gemini-2.5-flash}
+      - LLM_PROVIDER=${LLM_PROVIDER:-google}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL_NAME=${OPENROUTER_MODEL_NAME:-google/gemini-2.0-flash-lite-001:free}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_BASE_URL=${LANGFUSE_BASE_URL}
     depends_on:
       - db
       - redis
@@ -35,18 +42,16 @@ services:
       - "6379:6379"
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
+    image: opspilot-frontend:latest
     command: streamlit run frontend/app.py --server.port 8501 --server.address 0.0.0.0
     ports:
       - "8501:8501"
     environment:
       - API_URL=http://app:8000/api/v1
+      - PYTHONPATH=/app
     depends_on:
       - app
-    volumes:
-      - .:/app
 
 volumes:
   postgres_data:
