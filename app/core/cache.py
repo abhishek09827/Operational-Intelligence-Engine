@@ -8,9 +8,9 @@ from app.core.config import settings
 class CacheService:
     def __init__(self):
         self.redis = Redis(
-            host='redis', 
-            port=6379, 
-            db=0, 
+            host=settings.REDIS_HOST, 
+            port=settings.REDIS_PORT, 
+            db=settings.REDIS_DB, 
             decode_responses=True
         )
         self.default_ttl = 60 * 5  # 5 minutes

@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "opspilot"
     DATABASE_URL: str | None = None
+
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
     
     GOOGLE_API_KEY: str = ""
     GEMINI_MODEL_NAME: str = "gemini-2.5-flash"
