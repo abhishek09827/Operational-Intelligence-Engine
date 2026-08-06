@@ -26,7 +26,7 @@ def test_vector_search(mock_embeddings_class):
     # Mock DB session
     mock_db = MagicMock()
     mock_result = MagicMock()
-    mock_result.scalars.return_value.all.return_value = [Incident(title="Test Incident")]
+    mock_result.scalars.return_value.all.return_value = [Incident(title="Test Incident", embedding=[0.1] * 768)]
     mock_db.execute.return_value = mock_result
     
     service = VectorDBService(db_session=mock_db)
