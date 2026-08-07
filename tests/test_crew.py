@@ -2,12 +2,13 @@ import pytest
 from unittest.mock import MagicMock, patch
 from app.crew.crew import OpsCrew
 
-@patch('app.crew.agents.ChatGoogleGenerativeAI')
+@patch('app.crew.agents.get_llm')
 def test_crew_initialization(mock_llm):
     # Mock LLM to avoid API calls and key errors during test
-    mock_llm.return_value = MagicMock()
+    mock_llm.return_value = "gemini/gemini-2.5-flash"
+    mock_db = MagicMock()
     
-    crew = OpsCrew(incident_id="inc-123", logs_content="Error: adapter not found")
+    crew = OpsCrew(incident_id="inc-123", logs_content="Error: adapter not found", db_session=mock_db)
     
     assert crew.incident_id == "inc-123"
     assert crew.logs_content == "Error: adapter not found"
@@ -15,15 +16,16 @@ def test_crew_initialization(mock_llm):
     assert crew.tasks is not None
 
 @patch('app.crew.crew.Crew')
-@patch('app.crew.agents.ChatGoogleGenerativeAI')
+@patch('app.crew.agents.get_llm')
 def test_crew_run_structure(mock_llm, mock_crew_class):
     # Mock dependencies
-    mock_llm.return_value = MagicMock()
+    mock_llm.return_value = "gemini/gemini-2.5-flash"
     mock_crew_instance = MagicMock()
     mock_crew_instance.kickoff.return_value = "Report generated"
     mock_crew_class.return_value = mock_crew_instance
+    mock_db = MagicMock()
     
-    crew = OpsCrew(incident_id="inc-123", logs_content="Error: Something failed")
+    crew = OpsCrew(incident_id="inc-123", logs_content="Error: Something failed", db_session=mock_db)
     result = crew.run()
     
     assert result == "Report generated"
