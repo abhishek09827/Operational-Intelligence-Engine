@@ -24,6 +24,23 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str | None = None
     OPENROUTER_MODEL_NAME: str = "deepseek/deepseek-v4-flash-latest"
 
+    # Local LLM provider (Ollama)
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL_NAME: str = "qwen3:8b"
+
+    # Triage engine
+    TRIAGE_LLM_ENABLED: bool = True
+    LLM_REQUEST_TIMEOUT_SECONDS: float = 30.0
+
+    # Context-enrichment tools (Milestone 2)
+    LOG_DIR: str = "logs"
+    LOG_MAX_LINES: int = 200
+    GITHUB_TOKEN: str = ""
+    GITHUB_API_URL: str = "https://api.github.com"
+    GITHUB_REPO: str = ""  # e.g. "my-org/checkout-service"
+    RUNBOOK_DIR: str = "runbooks"
+    RUNBOOK_TOP_K: int = 3
+
     # Langfuse Observability
     LANGFUSE_SECRET_KEY: str | None = None
     LANGFUSE_PUBLIC_KEY: str | None = None

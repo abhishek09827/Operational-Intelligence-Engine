@@ -21,3 +21,4 @@ plotly
 watchdog>=3.0.0 # for streamlit auto-reload
 langchain-openai>=0.1.0 # required for the OpenRouter LLM provider (judge module)
 openai>=1.0.0 # raw OpenAI client for OpenRouter reasoning-model completions (judge)
+langgraph>=1.0.0 # multi-agent swarm graph (typed state + interrupts), CrewAI replacement
