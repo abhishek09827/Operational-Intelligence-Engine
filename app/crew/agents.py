@@ -1,13 +1,26 @@
 from crewai import Agent, LLM
-from langchain_google_genai import ChatGoogleGenerativeAI
 from app.core.config import settings
+
+def get_llm():
+    if settings.LLM_PROVIDER.lower() == "openrouter" or (settings.OPENROUTER_API_KEY and not settings.GOOGLE_API_KEY):
+        return LLM(
+            model=f"openrouter/{settings.OPENROUTER_MODEL_NAME}",
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1"
+        )
+    else:
+        # Use configured Gemini model (e.g. gemini-2.5-flash or gemini-2.0-flash)
+        model_name = settings.GEMINI_MODEL_NAME
+        if not model_name.startswith("gemini-") and not model_name.startswith("models/"):
+            model_name = "gemini-2.5-flash"
+        return LLM(
+            model=f"gemini/{model_name}",
+            api_key=settings.GOOGLE_API_KEY
+        )
 
 class OpsAgents:
     def __init__(self):
-        self.llm = LLM(
-            model="gemini/gemini-2.5-flash",
-            api_key=settings.GOOGLE_API_KEY
-        )
+        self.llm = get_llm()
 
     def log_analysis_agent(self):
         return Agent(
