@@ -1,0 +1,69 @@
+# OpsPilot AI — Repository Rules (system prompt)
+
+## Rule 1: Changelog maintenance (mandatory)
+
+**Every change to this repository MUST update `CHANGELOG.md` in the same commit that
+introduces the change.** Never defer changelog updates to a later commit or a "docs
+cleanup" pass.
+
+When you make a change:
+
+1. Open `CHANGELOG.md` and add the entry under the `## [Unreleased]` section.
+2. Use exactly these Keep a Changelog categories, in this order, and only create the ones you need:
+   `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`.
+3. Write the entry for a human maintainer, not a diff:
+   - Lead with the behaviour change, in the imperative or past tense ("Add …", "Fix …").
+   - Reference the affected path(s) in backticks, e.g. `` `app/sanitizer/scrubber.py` ``.
+   - Include the user-visible surface (endpoint, setting, CLI command) when there is one.
+4. Do **not** add a "Version bump" entry, do not invent release dates, and do not edit already
+   released sections. Only `[Unreleased]` grows during normal work.
+5. Never delete or rewrite release history. If a released entry was wrong, append a clarification
+   under `[Unreleased]` (category `### Changed` or `### Fixed`).
+6. Keep the link-reference block at the bottom of `CHANGELOG.md` intact. Add a new
+   `[x.y.z]: <compare-url>` line only when cutting a release.
+
+### Cutting a release
+
+When asked to release version `X.Y.Z`:
+
+1. Rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` (today's date, UTC).
+2. Insert a fresh empty `## [Unreleased]` section above it.
+3. Update the `[Unreleased]` compare link at the bottom to diff from the new tag, and add the
+   `[X.Y.Z]` tag link.
+4. Follow Semantic Versioning: `MAJOR` for breaking API/contract changes (`/api/v2` contract
+   changes count), `MINOR` for backwards-compatible features, `PATCH` for fixes.
+
+### Changelog entry examples
+
+```markdown
+### Added
+- **v2 Alert Ingestion API — `POST /api/v2/alerts/triage`** (`app/api/api_v2/endpoints/alerts.py`).
+  Accepts Prometheus Alertmanager webhooks and direct test triggers.
+
+### Fixed
+- Redis host, port, and DB index are now read from settings instead of being hardcoded
+  (`app/core/config.py`, `app/core/cache.py`).
+
+### Security
+- Alert payloads, labels, and annotations are sanitized before any downstream LLM dispatch.
+```
+
+## Rule 2: Do not break the documented contracts
+
+- v1 endpoints (`/api/v1/**`) are frozen unless explicitly asked to change.
+- v2 contracts live in `app/schemas/v2/**` and are Pydantic models with citations; treat adding
+  a required field as a breaking change (document it under `### Changed`).
+
+## Rule 3: Tests before claims
+
+- Run the suite (`pytest`) before reporting a change as complete, and state the pass count.
+- Every new endpoint, tool, or schema needs at least one test under `tests/`.
+- Sanitizer behaviour is security-relevant: any new secret pattern requires a test that proves
+  the secret does **not** survive sanitization.
+
+## Rule 4: Style
+
+- Type hints on public functions; docstrings on services and endpoints.
+- Secrets only ever come from `app/core/config.py` (`Settings`); never hardcode hosts, ports,
+  or credentials in application code.
+- Use `datetime.now(timezone.utc)`, never the deprecated `datetime.utcnow()`.

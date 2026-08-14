@@ -155,3 +155,39 @@ When interviewers ask: *"Why build an application for this instead of just using
 3. **Security & Secret Redaction:** Connecting commercial chat tools directly to production infrastructure risks sending raw tokens, database passwords, and PII to an external vendor. OpsPilot scrubs all data through a deterministic sanitization layer *before* dispatching to the LLM.
 4. **Institutional Memory (Bidirectional RAG):** ChatGPT chats are ephemeral. OpsPilot allows engineers to verify post-mortems with one click, embedding them into `pgvector` to resolve future incidents faster.
 5. **Typed Pydantic Contracts:** ChatGPT outputs unpredictable prose. OpsPilot outputs validated JSON objects that can trigger downstream automation, update Jira/PagerDuty tickets, and render rich interactive dashboard cards.
+
+---
+
+## 6. Framework Decision: removing CrewAI, LangGraph for the swarm
+
+### Why CrewAI is being removed
+
+* **Heavy, mostly unused dependency tree.** CrewAI 1.15 pulls `chromadb`, `lancedb`,
+  `pdfplumber`, `openpyxl`, `mcp`, `opentelemetry-sdk`, `instructor`, `cel-python`,
+  `tokenizers`, `aiosqlite`… — none of which OpsPilot uses. Image size, cold start and CVE
+  surface for zero benefit.
+* **It owns stdout.** Its `verbose=True` spinners/banners print into the process stream,
+  which is the "sys.stdout hijacking" item in Milestone 1.
+* **Untyped output.** CrewAI returns free-form markdown, which is exactly why `incident.py`
+  needed string heuristics (`infer_confidence`) to fill `confidence_score`.
+* **Four round-trips by default.** The sequential crew spends four LLM calls on one incident
+  because splitting the work across "roles" is a prompt preference, not a requirement.
+
+### What replaces it
+
+| Stage | Choice | Reason |
+|---|---|---|
+| **Fast path** (M3) | **No framework** — `app/triage/fast_path.py` | One alert, one structured call, one Pydantic contract, one repair/degrade path. Fully testable with a fake client and no network. |
+| **Multi-agent swarm** (M3) | **LangGraph** | Typed state, explicit nodes/edges, conditional escalation, `interrupt()` for the "Verify & Save to Post-Mortems" human loop (M5), checkpointing for long investigations, per-node Langfuse traces. |
+
+LangGraph is chosen over alternatives because it already sits on `langchain-core`
+(a present dependency), needs only `langgraph` + a checkpoint store, and maps directly onto
+the two things CrewAI never gave us: **typed state** and **resumable execution**.
+
+### Migration status
+
+* `app/llm/**` — provider layer (`gemini` / `openrouter` / `ollama`) with one `complete()` method. **Done.**
+* `app/triage/**` — fast-path engine + deterministic evidence bundle + routing pipeline. **Done.**
+* `app/crew/**` — kept temporarily because `POST /api/v1/incident/analyze` still imports it.
+  Deleting `app/crew/**`, the `crewai` pin in `requirements.txt`, and the v1 `/analyze`
+  CrewAI call is the next step after the LangGraph swarm lands (M3).
