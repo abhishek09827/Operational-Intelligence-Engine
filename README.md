@@ -12,6 +12,7 @@
 - **RAG Integration**: search through historical incident data using vector embeddings (pgvector).
 - **Observability**: Built-in Prometheus instrumentation for real-time monitoring.
 
+
 ## 🏗️ Architecture
 
 The system follows a microservices-based architecture powered by Docker containers.
