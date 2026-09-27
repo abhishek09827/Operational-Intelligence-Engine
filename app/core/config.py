@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     PROJECT_NAME: str = "OpsPilot AI"
     API_V1_STR: str = "/api/v1"
+    API_V2_STR: str = "/api/v2"
     
     POSTGRES_SERVER: str = "db"
     POSTGRES_USER: str = "postgres"
