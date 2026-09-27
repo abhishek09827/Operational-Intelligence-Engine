@@ -15,7 +15,9 @@ app = FastAPI(title=settings.PROJECT_NAME)
 Instrumentator().instrument(app).expose(app)
 
 from app.api.api_v1.api import api_router
+from app.api.api_v2.api import api_v2_router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_v2_router, prefix=settings.API_V2_STR)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
