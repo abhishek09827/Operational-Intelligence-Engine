@@ -4,6 +4,10 @@ OpsPilot.ai is an Applied AI incident-investigation service. It accepts alerts, 
 affected application and its integrations, collects verifiable evidence, and returns a traced,
 evidence-backed investigation report.
 
+
+Uploading oie_demo.mp4…
+
+
 The active design is deliberately hybrid:
 
 - **Deterministic code** controls routing, application resolution, tool execution, evidence
@@ -415,5 +419,3 @@ Interactive API documentation is available at `http://127.0.0.1:8008/docs`.
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for the complete change history.
-
-For a recordable walkthrough, use the [incident investigation video script](docs/VIDEO_DEMO_SCRIPT.md).
