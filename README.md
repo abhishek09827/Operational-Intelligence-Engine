@@ -5,7 +5,11 @@ affected application and its integrations, collects verifiable evidence, and ret
 evidence-backed investigation report.
 
 
-Uploading oie_demo.mp4…
+
+
+https://github.com/user-attachments/assets/63d4c52a-06a5-4631-b81d-991fb8151fe3
+
+
 
 
 The active design is deliberately hybrid:
