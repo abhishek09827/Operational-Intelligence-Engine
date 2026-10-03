@@ -5,11 +5,7 @@ affected application and its integrations, collects verifiable evidence, and ret
 evidence-backed investigation report.
 
 
-
-
-https://github.com/user-attachments/assets/63d4c52a-06a5-4631-b81d-991fb8151fe3
-
-
+https://github.com/user-attachments/assets/28778c2b-8b66-4dc5-906d-991cffc5904e
 
 
 The active design is deliberately hybrid:
